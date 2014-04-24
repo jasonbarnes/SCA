@@ -1,0 +1,31 @@
+Traffic Classifier README:
+
+The traffic classifier works in 4 steps:
+	Automatic browsing for data collection
+	Turning the pcap files into csv triplets
+	Applying countermeasures to the csv
+	Feature extraction and classification
+
+Automatic Browsing:
+	This step can be done by following the
+	instructions inside of auto_browser
+	followed by the instructions in prepare.
+	This step is not fully automated since it
+	needs to be run very rarely.  Once you have
+	a dataset, there should be no need to go through
+	auto_browser or prepare unless you need a new one.
+
+Triplet Extraction:
+	This step can be done inside of triplet_extractor.
+	Like the last step, it only has to be done once per
+	dataset, so it does not need to be run frequently.
+
+Countermeasures:
+	This step is optional.  It takes a triplet file and
+	modifies it by applying one of the countermeasure
+	functions to it.
+
+Feature Extraction and Classification:
+	This step uses the multiple feature extraction
+	functions to extract the features from the triplet
+	file and convert it to a csv for use with libSVM.

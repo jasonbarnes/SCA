@@ -1,7 +1,7 @@
-#ifndef __TOTAL_TIME_FE_H__
-#define __TOTAL_TIME_FE_H__
+#ifndef __FE_TOTAL_TIME_H__
+#define __FE_TOTAL_TIME_H__
 
-extern int total_time_fe_num(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic);
-extern int total_time_fe_extract(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic, double *feature_vector, int feature_vector_size, char *filename);
+extern int total_time_fe_num(struct fe_config_list *fe_list);
+extern int total_time_fe_extract(struct fe_config_list *fe_list, double *feature_vector, int feature_vector_size, struct t_trace *trace);
 
 #endif

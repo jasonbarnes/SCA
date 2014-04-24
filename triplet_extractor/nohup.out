@@ -1,0 +1,34 @@
+
+(process:7536): GConf-WARNING **: Client failed to connect to the D-BUS daemon:
+Unable to autolaunch a dbus-daemon without a $DISPLAY for X11
+GConf Error: No D-BUS daemon running
+
+
+(process:7536): GConf-WARNING **: Client failed to connect to the D-BUS daemon:
+Unable to autolaunch a dbus-daemon without a $DISPLAY for X11
+GConf Error: No D-BUS daemon running
+
+Traceback (most recent call last):
+  File "main.py", line 356, in <module>
+    run()
+  File "main.py", line 268, in run
+    seed = random.randint( startIndex, endIndex )
+  File "/usr/lib/python2.7/random.py", line 241, in randint
+    return self.randrange(a, b+1)
+  File "/usr/lib/python2.7/random.py", line 217, in randrange
+    raise ValueError, "empty range for randrange() (%d,%d, %d)" % (istart, istop, width)
+ValueError: empty range for randrange() (180,118, -62)
+Traceback (most recent call last):
+  File "main.py", line 356, in <module>
+    run()
+  File "main.py", line 281, in run
+    webpageAll = Datastore.getWebpagesLL( webpageIds, 0, len(config.DATA_SET) )
+  File "/sca/adam/triplet_extractor/Datastore.py", line 30, in getWebpagesLL
+    trace = Datastore.getTraceLL( webpageId, traceIndex )
+  File "/sca/adam/triplet_extractor/Datastore.py", line 51, in getTraceLL
+    webpageId)
+  File "/sca/adam/triplet_extractor/pcapparser.py", line 24, in readfile
+    pcapReader = dpkt.pcap.Reader( file( absPath, "rb") )
+  File "/usr/lib/pymodules/python2.7/dpkt/pcap.py", line 96, in __init__
+    buf = self.__f.read(FileHdr.__hdr_len__)
+KeyboardInterrupt

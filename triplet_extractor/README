@@ -1,0 +1,26 @@
+Triplet Extractor:
+
+The triplet extractor is a directly modified version of
+Dyer's traffic-framwork.  To run this code, open config.py
+in an editor and change the line with BASE_DIR to match
+the absolute path to "triplet_extractor/links".
+
+The links directory should contain two links, one to
+"prepare/pcap-logs" and one two a directory containing
+"weka.jar", assuming that you've already installed WEKA by
+this point.  You will have to edit these links to point
+to the right locations.
+
+Alternatively, you can make the pcap-logs link point to 
+the Liberatore dataset to make it use that instead of your
+data.
+
+Once the BASE_DIR and links are correct, you can proceed by
+using "main.py -h" to look at possible options for extraction.
+These match completely with Dyer's traffic-framwork.  After you
+have selected whatever options you want, use main.py to 
+generate the triplet file.
+
+When you use main.py to extract triplets, always use the "-d 0"
+option.  This way, it will use the dataset stored in
+"prepare/pcap-logs" instead of anything else.

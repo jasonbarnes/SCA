@@ -4,13 +4,11 @@
 #include <stdlib.h>
 #include <pcap/pcap.h>
 #include <assert.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
 #include <math.h>
 
 #include "round_double.h"
 #include "countable_set.h"
-#include "pcap_helper.h"
+#include "trip_trace.h"
 /*
 This program is designed to generate two things needed for
 feature_extraction.c and fe_html_markers.c to work correctly:
@@ -23,20 +21,18 @@ behavior, we must know beforehand how the entire set of pcap files
 will impact the number of markers.
 */
 
-struct html_marker_dat{
-	int num_packets;
-	int done;
-	int32_t src;
-	int32_t dst;
-	int counterUp;
-	int counterDown;
-	int htmlMarker;
+struct generate_set_info{
 	struct countable_set *set;
+	int counterUP;
+	int counterDOWN;
+	int htmlMarker;
 };
 
 void usage(){
-	printf("usage:\ngenerate_html_marker <pcap_file> <html_marker.dat>\n");
+	printf("usage:\ngenerate_html_marker <trip_file> <html_marker.dat>\n");
 }
+
+
 
 /*
 generate_set
@@ -45,64 +41,45 @@ file, finding the appropriate markers.
 This code is based on traffic-analysis-framework/classifiers/PanchenkoClassifier.py
 by K.P. Dyer
 */
-void generate_set(const struct pcap_pkthdr *pkthdr, const u_char *packet, struct iphdr *ip, struct tcphdr *tcp, void *data){
-	struct html_marker_dat *dat = (struct html_marker_dat *)data;
-	if(dat->done){
-		return;
-	}
-	if(dat->num_packets == 0){
-		dat->src = ip->saddr;
-		dat->dst = ip->daddr;
-	}
-	dat->num_packets++;
-	if(ip->saddr == dat->src){
-		dat->counterUp++;
-		if((dat->counterUp > 1) && (dat->counterDown > 0)){
-			dat->done = 1;
-			return;
+int generate_set_pkt(struct t_pkt *pkt, void *data){
+	struct generate_set_info *info = (struct generate_set_info *)data;
+	if(pkt->dir == 0){
+		info->counterUP++;
+		if((info->counterUP > 1) && (info->counterDOWN > 0)){
+			return EXIT_FAILURE;//This should cause the loop to end here instead of continuing on
 		}
 	}
-	else{
-		dat->counterDown++;
-		dat->htmlMarker += ntohs(ip->tot_len);
+	else if(pkt->dir == 1){
+		info->counterDOWN++;
+		info->htmlMarker += pkt->size;
 	}
-	return;
+	return EXIT_SUCCESS;
+}
+int generate_set_trace(struct t_trace *trace, void *data){
+	struct generate_set_info *info = (struct generate_set_info *)data;
+	info->counterUP=0;
+	info->counterDOWN=0;
+	info->htmlMarker=0;
+	for_each_t_pkt(trace, &generate_set_pkt, (void *)info);
+	info->htmlMarker = (int)round_double((double)info->htmlMarker, 600.0);
+	cs_add_key(info->set, info->htmlMarker);
+	return EXIT_SUCCESS;
 }
 
 int main(int argc, char **argv){
 	struct countable_set *set;
-	struct html_marker_dat *dat;
-	int i;
-	dat = (struct html_marker_dat *)malloc(sizeof(struct html_marker_dat));
-	dat->counterUp=0;
-	dat->counterDown=0;
-	dat->htmlMarker=0;
-	dat->num_packets=0;
-	dat->done = 0;
+	struct t_trace_list *list;
+	struct generate_set_info info;
+	set = cs_init_set();
 	if(argc != 3){
 		usage();
 		return EXIT_FAILURE;
 	}
-	set = cs_load_set(argv[2]);
-	if(set == NULL){
-		return EXIT_FAILURE;
-	}
-	if(set->num_elements == 0){
-		//printf("No elements in set\n");
-	}
-	else{
-		for(i=0 ; i < set->num_elements ; i++){
-			//printf("%d\n", set->keys[i]);
-		}
-	}
-	dat->set = set;
-	if(pcap_helper_offline(argv[1], &generate_set, dat) == EXIT_FAILURE){
-		return EXIT_FAILURE;
-	}
-	cs_add_key(set, (int)round_double(dat->htmlMarker, 600));
-	if(cs_save_set(set, argv[2]) == EXIT_FAILURE){
-		return EXIT_FAILURE;
-	}
-	cs_deinit_set(set);
+	list = load_t_trace_list(argv[1]);
+	info.set = set;
+	for_each_t_trace(list, &generate_set_trace, (void *)&info);
+	printf("HTML Markers:\n");
+	cs_print_set(set);
+	cs_save_set(set, argv[2]);
 	return EXIT_SUCCESS;
 }

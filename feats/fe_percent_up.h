@@ -1,7 +1,7 @@
-#ifndef __PERCENT_UP_FE_H__
-#define __PERCENT_UP_FE_H__
+#ifndef __FE_PERCENT_UP_H__
+#define __FE_PERCENT_UP_H__
 
-extern int percent_up_fe_num(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic);
-extern int percent_up_fe_extract(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic, double *feature_vector, int feature_vector_size, char *filename);
+extern int percent_up_fe_num(struct fe_config_list *fe_list);
+extern int percent_up_fe_extract(struct fe_config_list *fe_list, double *feature_vector, int feature_vector_size, struct t_trace *trace);
 
 #endif

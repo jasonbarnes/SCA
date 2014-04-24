@@ -1,0 +1,8 @@
+svm.sh trains and tests the svm automatically,
+assuming that you have created "../feats/test.out"
+and "../feats/train.out" already.  You can edit
+svm.py to use different values for its grid search
+for C and gamma.
+
+You may have to alter the links for test.out and
+train.out to match your machine's configuration.

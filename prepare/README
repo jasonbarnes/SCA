@@ -1,0 +1,22 @@
+prepare README
+
+PCAP preparation:
+The scripts and programs in this directory are designed
+to make the pcap files captured in ../auto_browser look
+like the files found in the Liberatore dataset,
+including having the same names.  This way, Dyer's
+traffic-framework code can be called on any pcap files
+we create for verification purposes.
+
+convert_name.sh
+	This copies the files from ../auto_browser into
+	this directory after changing the pcap files to 
+	match the Liberatore dataset. (The script name
+	should probably be changed.)
+
+convert.sh
+	This copies the files that have been converted by
+	convert_name.sh to pcap-logs, so that our pcap-logs
+	directory matches exactly what traffic-framwork
+	(and the rest of our code) expects to see.
+

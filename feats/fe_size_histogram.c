@@ -1,43 +1,26 @@
+#include "trip_trace.h"
 #include <stdio.h>
-#include <stdint.h>
-#include <string.h>
 #include <stdlib.h>
 #include <pcap/pcap.h>
-#include <assert.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <math.h>
 
+#include "round_double.h"
 #include "feature_extraction.h"
 #include "feature_config.h"
-#include "pcap_helper.h"
-#include "countable_set.h"
 #include "fe_size_histogram.h"
+#include "countable_set.h"
 
-/*
-This feature extractor counts the total number of packets that travel from src to dst.
-*/
-
-int total_pkt;
-
-struct size_histogram_dat{
-	int num_packets;
-	int done;
-	int32_t src;
-	int32_t dst;
-	struct countable_set *down_set;
+struct generate_set_info{
 	struct countable_set *up_set;
+	struct countable_set *down_set;
 	double *list;
 	int list_max;
 };
 
-extern int size_histogram_fe_num(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic){
+extern int size_histogram_fe_num(struct fe_config_list *fe_list){
+	int64_t *flag;
+	int total;
 	struct countable_set *up_set;
 	struct countable_set *down_set;
-	int64_t *flag;
-	int64_t *value;
-	int ret_val;
-	int i;
 	flag = get_fe_config_value(fe_list, "size_histogram");
 	if(flag == NULL){
 		return 0;
@@ -45,68 +28,68 @@ extern int size_histogram_fe_num(struct fe_config_list *fe_list, struct fe_basic
 	if(*flag == 0){
 		return 0;
 	}
-	//value = get_fe_config_value(fe_list, "max_html_histogram");
 	up_set = cs_load_set("size_histogram_up.dat");
 	down_set = cs_load_set("size_histogram_down.dat");
-	
 	if(up_set == NULL || down_set == NULL){
 		return 0;
 	}
-	ret_val = up_set->num_elements + down_set->num_elements;
+	total = up_set->num_elements + down_set->num_elements;
 	cs_deinit_set(up_set);
 	cs_deinit_set(down_set);
-	return ret_val;
+	return total;
 }
 
-
-void size_histogram_loop(const struct pcap_pkthdr *pkthdr, const u_char *packet, struct iphdr *ip, struct tcphdr *tcp, void *data){
-	struct size_histogram_dat *dat = (struct size_histogram_dat *)data;
+static int generate_features_pkt(struct t_pkt *pkt, void *data){
+	struct generate_set_info *info = (struct generate_set_info *)data;
 	int index;
-	if(dat->num_packets == 0){
-		dat->src = ip->saddr;
-		dat->dst = ip->daddr;
+	switch(pkt->dir){
+	case 0:
+		index = cs_key_index(info->up_set, pkt->size);
+		if(index < 0 || index > info->list_max){
+			return EXIT_FAILURE;
+		}
+		info->list[index] = info->list[index] + 1.0;
+		break;
+	case 1:
+		index = cs_key_index(info->down_set, pkt->size);
+		if(index < 0 || index > info->list_max){
+			return EXIT_FAILURE;
+		}
+		index += info->up_set->num_elements;
+		info->list[index] = info->list[index] + 1.0;
+		break;
 	}
-	dat->num_packets++;
-
-	if(dat->src == ip->saddr){
-		//cs_add_key(dat->up_set, ntohs(ip->tot_len));
-		index = cs_key_index(dat->up_set, ntohs(ip->tot_len));
-		if(index < 0 || index >= dat->list_max){
-			//Do nothing
-		}
-		else{
-			dat->list[index] += 1.0;
-		}
-	}
-	else{
-		//cs_add_key(dat->down_set, ntohs(ip->tot_len));	
-		index = cs_key_index(dat->down_set, ntohs(ip->tot_len));
-		if(index < 0 || index >= dat->list_max){
-			//Do nothing
-		}
-		else{
-			dat->list[dat->up_set->num_elements + index] += 1.0;
-		}
-	}
-	return;
+	return EXIT_SUCCESS;
 }
 
-extern int size_histogram_fe_extract(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic, double *feature_vector, int feature_vector_start_index, char *filename){
-	struct size_histogram_dat dat;
+static int generate_features(struct fe_config_list *fe_list, double *feature_vector, int max_features, struct t_trace *trace, struct countable_set *up_set, struct countable_set *down_set){
+	struct generate_set_info info;
 	int index;
-	dat.num_packets = 0;
-	dat.done = 0;
-	dat.src = 0;
-	dat.dst = 0;
-	dat.list = feature_vector + feature_vector_start_index;
-	dat.list_max = size_histogram_fe_num(fe_list, fe_basic);
-	dat.up_set = cs_load_set("size_histogram_up.dat");
-	dat.down_set = cs_load_set("size_histogram_down.dat");
-	total_pkt = 0;
-	if(pcap_helper_offline(filename, &size_histogram_loop, (void *)&dat) == EXIT_FAILURE){
+	info.up_set = up_set;
+	info.down_set = down_set;
+	info.list = feature_vector;
+	info.list_max = max_features;
+	for_each_t_pkt(trace, &generate_features_pkt, (void *)&info);
+	return EXIT_SUCCESS;
+}
+
+extern int size_histogram_fe_extract(struct fe_config_list *fe_list, double *feature_vector, int feature_vector_start_index, struct t_trace *trace){
+	double *list;
+	int list_max;
+	int i;
+	struct countable_set *up_set;
+	struct countable_set *down_set;
+	list = feature_vector + feature_vector_start_index;
+	list_max = size_histogram_fe_num(fe_list);
+	up_set = cs_load_set("size_histogram_up.dat");
+	down_set = cs_load_set("size_histogram_down.dat");
+	if(up_set == NULL || down_set == NULL){
 		return EXIT_FAILURE;
 	}
-	cs_deinit_set(dat.up_set);
-	cs_deinit_set(dat.down_set);
+	if(generate_features(fe_list, list, list_max, trace, up_set, down_set) == EXIT_FAILURE){
+		return EXIT_FAILURE;
+	}
+	cs_deinit_set(up_set);
+	cs_deinit_set(down_set);
 	return EXIT_SUCCESS;
 }

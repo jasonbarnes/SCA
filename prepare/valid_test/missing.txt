@@ -1,0 +1,7 @@
+akamaihd.net
+cloudfront.net
+doorblog.jp
+ettoday.net
+jobfindgold.info
+thepiratebay.sx
+uimserv.net

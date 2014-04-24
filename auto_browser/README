@@ -1,0 +1,15 @@
+auto_browser README
+
+The scripts and programs in this directory are designed
+to automatically request webpages from the alexa top
+list.
+
+wget_n.sh
+	This script is used to use wget to get the webpages
+	supplied through its arguments.
+
+prepare_pcap
+	This program is used to remove irrelevant packets from
+	pcap files, primarily ACK packets without data.
+
+

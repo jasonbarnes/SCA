@@ -7,11 +7,10 @@ def match(a,b):
 	for i in range(len(a)):
 		c = a[i]
 		d = b[i]
-		if(c == 0 or d == 0):
-			less_val = less_val + 1
-		if(int(c) == int(d)):
+		if(c == d):
 			total = total + 1
-	return (float(total) / float(len(a)-less_val))
+	return (float(total) / float(len(a)))
+
 
 x = np.loadtxt("svm_train.txt", delimiter=',')
 y = np.loadtxt("svm_test.txt", delimiter=',')
@@ -22,8 +21,8 @@ test_data = y[:,1:-1]
 
 #C_val = [1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10]
 #gamma_val = [1e1, 1.0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8]
-C_val = [1e8, 1e9, 1e10]
-gamma_val = [1e-6, 1e-7, 1e-8]
+C_val = [131072]
+gamma_val = [0.0000019073486328125]
 
 max_val = 0.0
 max_gamma = 0.0

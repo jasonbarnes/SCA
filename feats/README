@@ -1,0 +1,31 @@
+Feature Extraction:
+
+After doing triplet_extraction, you should have some
+csv file with all of the extracted triplets.  Using this
+file (named "trips.csv" if using the top level script), 
+you can perform feature extraction using the following
+steps:
+
+Edit feature.config:
+	feature.config contains configuration options for
+	all of the feature extraction functions.  Most of
+	the options simply turn a feature on or off. In
+	the default file, featues set to 1 or 0 control
+	whether a feature extractor is used, while others
+	are used for configuration (like setting the total
+	number of number markers).  You can add new
+	options to this file and use them however you want,
+	but it is a good idea to add a 0/1 option for each
+	new feature extractor that you add to make it simple
+	to turn them on and off.
+
+generate_marker_info.sh [triplet file]
+	This script calls all of the generate* programs.  It
+	is used to determine how much memory to allocate for
+	histograms in feature_extraction. This needs to be run
+	for each new triplet file used.
+
+feature_extraction [triplet file] [feature.config]
+	This program performs the feature extraction.  It outputs
+	a NxM csv to be used by libSVM in the next step.  Which
+	features are extracted are controlled by feature.config.

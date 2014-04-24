@@ -1,7 +1,7 @@
-#ifndef __ONE_D_SPACE_FE_H__
-#define __ONE_D_SPACE_FE_H__
+#ifndef __FE_ONE_D_SPACE_H__
+#define __FE_ONE_D_SPACE_H__
 
-extern int one_d_space_fe_num(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic);
-extern int one_d_space_fe_extract(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic, double *feature_vector, int feature_vector_size, char *filename);
+extern int one_d_space_fe_num(struct fe_config_list *fe_list);
+extern int one_d_space_fe_extract(struct fe_config_list *fe_list, double *feature_vector, int feature_vector_size, struct t_trace *trace);
 
 #endif

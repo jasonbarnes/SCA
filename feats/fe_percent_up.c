@@ -1,3 +1,4 @@
+#include "trip_trace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pcap/pcap.h>
@@ -5,14 +6,15 @@
 #include "feature_extraction.h"
 #include "feature_config.h"
 #include "fe_percent_up.h"
+#include "round_double.h"
 
-/*
-This feature extractor counts the total number of packets that travel from src to dst.
-*/
+struct generate_set_info {
+	int total;
+	int total_up;
+	int total_down;
+};
 
-int total_pkt;
-
-extern int percent_up_fe_num(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic){
+extern int percent_up_fe_num(struct fe_config_list *fe_list){
 	int64_t *flag;
 	flag = get_fe_config_value(fe_list, "percent_up");
 	if(flag == NULL){
@@ -24,17 +26,31 @@ extern int percent_up_fe_num(struct fe_config_list *fe_list, struct fe_basic_inf
 	return 1;
 }
 
-extern int percent_up_fe_extract(struct fe_config_list *fe_list, struct fe_basic_info *fe_basic, double *feature_vector, int feature_vector_start_index, char *filename){
+static int generate_features_pkt(struct t_pkt *pkt, void *data){
+	struct generate_set_info *info = (struct generate_set_info *)data;
+	switch(pkt->dir){
+	case 0:
+		info->total_up += pkt->size;
+		break;
+	case 1:
+		info->total_down += pkt->size;
+		break;
+	}
+	info->total += pkt->size;
+	return EXIT_SUCCESS;
+}
+
+extern int percent_up_fe_extract(struct fe_config_list *fe_list, double *feature_vector, int feature_vector_start_index, struct t_trace *trace){
 	double *list;
 	int list_max;
 	int i;
-	double a,b;
-	total_pkt = 0;
+	struct generate_set_info info;
+	info.total = 0;
+	info.total_up = 0;
+	info.total_down = 0;
 	list = feature_vector + feature_vector_start_index;
-	list_max = percent_up_fe_num(fe_list, fe_basic);
-	b = (double)fe_basic->num_packets;
-	a = (double)fe_basic->num_up_packets;
-	list[0] = (a/b)*100.0;
-	list[0] = round_double(list[0], 5.0);
+	list_max = percent_up_fe_num(fe_list);
+	for_each_t_pkt(trace, &generate_features_pkt, (void *)&info);
+	list[0] = round_double(100.0 * (double)info.total_down/(double)info.total, 5.0);
 	return EXIT_SUCCESS;
 }
